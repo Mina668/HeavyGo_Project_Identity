@@ -15,8 +15,7 @@ builder.Services.AddSignalR();
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false; // optional
-})
-    .AddRoles<IdentityRole>() // if you want roles
+}).AddRoles<IdentityRole>() 
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // 3?? Add MVC with views
@@ -26,7 +25,6 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
-
 // 5?? Middleware pipeline
 if (!app.Environment.IsDevelopment())
 {
@@ -41,7 +39,9 @@ app.UseRouting();
 
 app.UseAuthentication(); // ? must be before Authorization
 app.UseAuthorization();
-
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 // 6?? Route configuration
 app.MapControllerRoute(
     name: "default",
@@ -49,6 +49,4 @@ app.MapControllerRoute(
 
 app.MapRazorPages(); // ? needed for Identity scaffolded pages
 app.MapHub<LocationHub>("/locationHub");
-
-
 app.Run();

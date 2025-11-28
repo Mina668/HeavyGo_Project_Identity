@@ -1,4 +1,3 @@
-// ChooseRole.cshtml.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -7,22 +6,22 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
     public class ChooseRoleModel : PageModel
     {
         [BindProperty]
-        public string Role { get; set; }
+        public string roleName { get; set; }
 
         public void OnGet()
         {
-            // Default role if needed
-            Role = "Client";
+            roleName = "Client"; // default selection
         }
 
         public IActionResult OnPost()
         {
-            if (Role == "Client")
+            if (roleName == "Client")
                 return RedirectToPage("/Account/Register", new { area = "Identity", role = "Client" });
-            else if (Role == "Driver")
+            else if (roleName == "Driver")
                 return RedirectToPage("/Account/Register", new { area = "Identity", role = "Driver" });
 
             return Page();
         }
+
     }
 }

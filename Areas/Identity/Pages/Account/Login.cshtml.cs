@@ -106,53 +106,40 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            returnUrl ??= Url.Content("~/");
+            if (!ModelState.IsValid)
+                return Page();
+
+            // Step 1 — Find user
             var user = await _userManager.FindByEmailAsync(Input.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Invalid login attempt.");
+                return Page();
+            }
+            // Step 2 — Attempt login
+            var result = await _signInManager.PasswordSignInAsync(
+                user.UserName,   // IMPORTANT: use username, not email
+                Input.Password,
+                Input.RememberMe,
+                lockoutOnFailure: false
+            );
+
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("", "Invalid login attempt.");
+                return Page();
+            }
+
+            // Step 3 — Role-based redirect
             if (await _userManager.IsInRoleAsync(user, "Client"))
-            {
-                returnUrl ??= Url.Content("/Home/ClientHome");
-            }
+                return LocalRedirect("/Home/ClientHome");
+
             if (await _userManager.IsInRoleAsync(user, "Driver"))
-            {
-                returnUrl ??= Url.Content("/Home/DriverHome");
+                return LocalRedirect("/Home/DriverHome");
 
-            }
-
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
-            if (ModelState.IsValid)
-            {
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-                if (result.Succeeded)
-                {
-                    
-
-                    
-
-                    // Role-based redirect
-                    if (await _userManager.IsInRoleAsync(user,"Client"))
-                    {
-                        _logger.LogInformation("User logged in.");
-                        return LocalRedirect(returnUrl);
-                    }
-                    if (await _userManager.IsInRoleAsync(user,"Driver"))
-                    {
-                        _logger.LogInformation("User logged in.");
-
-                        return LocalRedirect(returnUrl);
-                    }
-                }
-                if (user == null || !result.Succeeded)
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return Page();
-                }
-                // fallback: only if user has no role
-            }
-
-            return Page();
+            // If user has no role
+            return LocalRedirect("/");
         }
-
-
-
     }
 }

@@ -27,7 +27,7 @@ namespace HeavyGo_Project_Identity.Controllers
         // ---------------------------------------------------------------
         // CLIENT HOME PAGE
         // ---------------------------------------------------------------
-        [Authorize(Roles = "Admin,Client")]
+        [Authorize(Roles = "Client")]
         public IActionResult ClientHome()
         {
             return View();
