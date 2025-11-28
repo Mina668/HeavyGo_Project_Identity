@@ -7,5 +7,7 @@
         public string From { get; set; }
         public string To { get; set; }
         public double DistanceKm { get; set; }
+        public string Status { get; set; } // "Accepted" or "Available"
     }
+
 }

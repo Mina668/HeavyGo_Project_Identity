@@ -1,5 +1,64 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@model List<HeavyGo_Project_Identity.Models.DriverOrderNearbyViewModel>
+<h2>Accepted Orders</h2>
+@if (!Model.Any(o => o.Status == "Accepted"))
+{
+    <p>You haven't accepted any orders yet.</p>
+}
+else
+{
+    <table class="table table-success">
+        <thead>
+            <tr>
+                <th>Client</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Distance (km)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model.Where(o => o.Status == "Accepted"))
+            {
+                <tr>
+                    <td>@order.ClientName</td>
+                    <td>@order.From</td>
+                    <td>@order.To</td>
+                    <td>@order.DistanceKm.ToString("0.00")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h2>Nearby Orders</h2>
+@if (!Model.Any(o => o.Status == "Available"))
+{
+    <p>No active nearby orders.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Client</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Distance (km)</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model.Where(o => o.Status == "Available"))
+            {
+                <tr>
+                    <td>@order.ClientName</td>
+                    <td>@order.From</td>
+                    <td>@order.To</td>
+                    <td>@order.DistanceKm.ToString("0.00")</td>
+                    <td>
+                        <a class="btn btn-primary" href="/DriverOrder/Request?orderId=@order.OrderId">Request Order</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
