@@ -1,108 +1,190 @@
 ﻿@model HeavyGo_Project_Identity.Models.Order
+
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Live Location</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.0/dist/browser/signalr.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDKbAzEQxZlvR0b4wfAWgcfs5ocdsOt2ds"></script>
+
     <style>
         #map {
-            height: 450px;
+            height: 500px;
             width: 100%;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-
-        .status-box {
-            padding: 15px;
-            background: white;
+            border: 2px solid #ccc;
             border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: 600;
-            text-align: center;
         }
     </style>
 </head>
 
-
 <h2>Create Order</h2>
 
-
 <form asp-action="Create" method="post">
-    <div class="form-group">
-        <label asp-for="PickupLocation"></label>
-        <input asp-for="PickupLocation" class="form-control" />
-        <span asp-validation-for="PickupLocation" class="text-danger"></span>
+
+    <div class="row">
+        <div class="form-group">
+            <label asp-for="PickupLocation"></label>
+            <input asp-for="PickupLocation" id="PickupLocation" class="form-control" />
+            <span asp-validation-for="PickupLocation" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="DropoffLocation"></label>
+            <input asp-for="DropoffLocation" id="DropoffLocation" class="form-control"/>
+            <span asp-validation-for="DropoffLocation" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="TotalPrice"></label>
+            <input asp-for="TotalPrice" class="form-control" />
+            <span asp-validation-for="TotalPrice" class="text-danger"></span>
+        </div>
+
     </div>
-    <div class="form-group">
-        <label asp-for="DropoffLocation"></label>
-        <input asp-for="DropoffLocation" class="form-control" />
-        <span asp-validation-for="DropoffLocation" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="TotalPrice"></label>
-        <input asp-for="TotalPrice" class="form-control" />
-        <span asp-validation-for="TotalPrice" class="text-danger"></span>
-    </div>
-    <button id="submit" type="submit" class="btn btn-success">Create</button>
+
+    <br />
+
+    <button type="button" class="btn btn-primary" id="useMyLocationBtn">Use My Location as Pickup</button>
+
+    <br /><br />
+
+    <div id="map"></div>
+
+    <br />
+
+    <button type="submit" class="btn btn-success">Create Order</button>
 </form>
-<div id="map"></div>
+
 <script>
     let map;
-    let marker;
-    let otherMarkers = {}; // to track other users
+    let pickupMarker = null;
+    let destinationMarker = null;
+    let driverMarker = null;
+    let routeLine = null;
 
-    function initMap(lat = 30.0444, lon = 31.2357) {
-        map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: lat, lng: lon },
-            zoom: 15,
-            mapTypeId: google.maps.MapTypeId.HYBRID,
-        });
+    let currentMode = "pickup"; // click input = choose mode
 
-        marker = new google.maps.Marker({
-            position: { lat: lat, lng: lon },
-            map: map,
-            title: "You"
+    // Initialize map
+    function initMap() {
+        map = L.map('map').setView([30.0444, 31.2357], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        map.on("click", (e) => {
+            const lat = e.latlng.lat;
+            const lon = e.latlng.lng;
+
+            if (currentMode === "pickup")
+                setPickup(lat, lon);
+            else
+                setDestination(lat, lon);
+
+            updateRoute();
+              });
+         }
+
+    // Set pickup marker
+    function setPickup(lat, lon) {
+        if (pickupMarker) map.removeLayer(pickupMarker);
+        pickupMarker = L.marker([lat, lon], { draggable: true }).addTo(map);
+
+        reverseGeocode(lat, lon, "PickupLocation");
+
+        pickupMarker.on("dragend", (e) => {
+            const p = e.target.getLatLng();
+            reverseGeocode(p.lat, p.lng, "PickupLocation");
+            updateRoute();
         });
     }
 
+    // Set destination marker
+    function setDestination(lat, lon) {
+        if (destinationMarker) map.removeLayer(destinationMarker);
 
-    function updateMarker(lat, lon) {
-        marker.setPosition({ lat: lat, lng: lon });
-        map.setCenter({ lat: lat, lng: lon });
+        destinationMarker = L.marker([lat, lon], {
+            draggable: true,
+            icon: L.icon({
+                iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                iconSize: [32, 32]
+            })
+        }).addTo(map);
+
+        reverseGeocode(lat, lon, "Destination");
+
+        destinationMarker.on("dragend", (e) => {
+            const p = e.target.getLatLng();
+            reverseGeocode(p.lat, p.lng, "Destination");
+            updateRoute();
+        });
     }
 
-    // SignalR connection
+    // Reverse geocode
+    function reverseGeocode(lat, lon, field) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById(field).value = d.display_name || `${lat}, ${lon}`;
+            });
+    }
+
+    // Show route line between pickup & destination
+    function updateRoute() {
+        if (routeLine) map.removeLayer(routeLine);
+        if (!pickupMarker || !destinationMarker) return;
+
+        const p1 = pickupMarker.getLatLng();
+        const p2 = destinationMarker.getLatLng();
+
+        routeLine = L.polyline([p1, p2], { weight: 4 }).addTo(map);
+    }
+
+    // Use user's live location for pickup
+    document.getElementById("useMyLocationBtn").addEventListener("click", () => {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            map.setView([lat, lon], 16);
+            setPickup(lat, lon);
+            updateRoute();
+        });
+    });
+
+    // Detect input click → change mode
+    document.getElementById("PickupLocation").addEventListener("click", () => currentMode = "pickup");
+    document.getElementById("DropoffLocation").addEventListener("click", () => currentMode = "destination");
+
+    // ------------------ LIVE DRIVER TRACKING ------------------
+
     const connection = new signalR.HubConnectionBuilder()
         .withUrl("/locationHub")
         .build();
 
-    connection.on("ReceiveLocation", (userId, lat, lon) => {
-        if (!otherMarkers[userId]) {
-            otherMarkers[userId] = new google.maps.Marker({
-                position: { lat, lng: lon },
-                map: map,
-                icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-            });
+    connection.on("DriverLocation", (lat, lon) => {
+        if (!driverMarker) {
+            driverMarker = L.marker([lat, lon], {
+                icon: L.icon({
+                    iconUrl: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+                    iconSize: [32, 32]
+                })
+            }).addTo(map);
         } else {
-            otherMarkers[userId].setPosition({ lat, lng: lon });
+            driverMarker.setLatLng([lat, lon]);
         }
     });
 
+    connection.start().catch(err => console.error(err));
 
-    connection.start().then(() => {
-        console.log("SignalR connected");
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition((position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                if (!map) initMap(lat, lon);
-                updateMarker(lat, lon);
-                connection.invoke("SendLocation", lat, lon);
-            });
-        } else {
-            alert("Geolocation is not supported by this browser.");
-        }
-    }).catch(err => console.error(err));
+    initMap();
 </script>
+@section NavbarButtons {
+    <div class="d-flex ms-auto align-items-center">
+        <a class="btn btn-outline-light btn-sm" asp-controller="Orders" asp-action="Index">MyOrders</a>
+        <a class="btn btn-outline-light btn-sm" asp-controller="Reviews" asp-action="UserReviews">MyReviews</a>
+        <a class="btn btn-outline-light btn-sm" asp-controller="Payments" asp-action="UserPayments">MyPayments</a>
+        <a class="btn btn-outline-light btn-sm" asp-area="Identity" asp-controller="Profile" asp-action="Index">Profile</a>
+        <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="d-inline">
+            <button type="submit" class="">Logout</button>
+        </form>
+    </div>
+}
