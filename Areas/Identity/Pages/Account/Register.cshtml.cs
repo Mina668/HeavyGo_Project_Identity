@@ -69,6 +69,7 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
+
         public class InputModel
         {
             /// <summary>
@@ -98,14 +99,46 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+            [Required]
+            [Display(Name = "Full Name")]
+            public string FullName { get; set; }
+
+            [Required]
+            [Display(Name = "National ID")]
+            public string NationalId { get; set; }
+            [Phone]
+            [Display(Name = "Phone Number")]
+            public string PhoneNumber { get; set; }
+
+            [Required]
+            [Display(Name = "User Name")]
+            public string UserName { get; set; }
+            // حقول Driver فقط
+            [Display(Name = "License Number")]
+            public string LicenseNumber { get; set; }
+
+            [Display(Name = "Vehicle Type")]
+            public string VehicleType { get; set; }
+
+            [Display(Name = "Vehicle Plate")]
+            public string VehicleNumberPlate { get; set; }
         }
 
-
+        /*
         public async Task OnGetAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
+        */
+        public async Task OnGetAsync(string role, string returnUrl = null)
+        {
+            ReturnUrl = returnUrl;
+            ViewData["Role"] = role; // نرسل الـ Role للصفحة
+
+            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+        }
+
         public async Task<IActionResult> OnPostAsync(string role, string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -120,8 +153,18 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
                 }
 
                 var user = CreateUser();
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+
+                await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+                user.FullName = Input.FullName;
+                user.NationalId = Input.NationalId;
+                user.PhoneNumber = Input.PhoneNumber;
+                if (role == "Driver")
+                {
+                    user.LicenseId = Input.LicenseNumber;
+                    user.VehicleType = Input.VehicleType;
+                    user.VehicleNumberPlate = Input.VehicleNumberPlate;
+                }
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
