@@ -9,5 +9,4 @@
         public double DistanceKm { get; set; }
         public string Status { get; set; } // "Accepted" or "Available"
     }
-
 }

@@ -52,10 +52,17 @@ public class OrdersController : Controller
     // POST: Orders/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Order order)
+    public async Task<IActionResult> Create(string PickupLocation,string DropoffLocation,int TotalPrice)
     {
+        Order order = new Order
+        {
+            PickupLocation = PickupLocation,
+            DropoffLocation = DropoffLocation,
+            TotalPrice = TotalPrice // Example fixed price, replace with actual logic
+        };
         if (ModelState.IsValid)
         {
+            
             var user = await _userManager.GetUserAsync(User);
             order.ApplicationUserId = user.Id;
             order.CreatedAt = DateTime.Now;
