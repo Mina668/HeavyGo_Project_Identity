@@ -1,5 +1,6 @@
-using HeavyGo_Project_Identity.Data;
+﻿using HeavyGo_Project_Identity.Data;
 using HeavyGo_Project_Identity.Models;
+using HeavyGo_Project_Identity.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -34,62 +35,63 @@ namespace HeavyGo_Project_Identity.Controllers
         }
 
         // ---------------------------------------------------------------
-        // DRIVER HOME PAGE � SHOW NEARBY ORDERS
+        // DRIVER HOME PAGE — SHOW NEARBY ORDERS
         // ---------------------------------------------------------------
         [Authorize(Roles = "Driver")]
         public async Task<IActionResult> DriverHome()
         {
             var driver = await _userManager.GetUserAsync(User);
-            //if (driver == null || driver.Latitude == null || driver.Longitude == null)
-            //    return RedirectToAction("UpdateLocation", "Account");
-            
-            var acceptedOrders = await _context.DriverOrderRequests
-                .Where(r => r.DriverId == driver.Id && r.Status == "Accepted")
-                .Include(r => r.Order)
-                    .ThenInclude(o => o.User)
-                .ToListAsync();
 
-            var acceptedOrdersVm = acceptedOrders.Select(r => new DriverOrderNearbyViewModel
+            if (driver == null)
             {
-                OrderId = r.OrderId,
-                ClientName = r.Order.User.UserName,
-                From = r.Order.PickupLocation,
-                To = r.Order.DropoffLocation,
-                DistanceKm = HaversineDistance(
-                    driver.Latitude.Value, driver.Longitude.Value,
-                    r.Order.User.Latitude.Value, r.Order.User.Longitude.Value
-                ),
-                Status = "Accepted"
-            }).ToList();
+                ViewBag.Error = "Please update your location first.";
+                return View(new DriverHomeViewModel());
+            }
 
-            // Orders ???????
-            var nearbyOrders = await _context.Orders
+            // Load all orders
+            var orders = await _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.DriverRequests)
-                .Where(o => !o.DriverRequests.Any(r => r.Status == "Accepted"))
                 .ToListAsync();
 
-            var nearbyOrdersVm = nearbyOrders
-                .Where(o => o.User.Latitude != null && o.User.Longitude != null)
+            // Accepted Orders (by this driver)
+            var acceptedOrders = orders
+                .Where(o => o.DriverRequests.Any(r =>
+                    r.DriverId == driver.Id &&
+                    r.Status == "Accepted"
+                ))
                 .Select(o => new DriverOrderNearbyViewModel
                 {
                     OrderId = o.OrderId,
                     ClientName = o.User.UserName,
                     From = o.PickupLocation,
                     To = o.DropoffLocation,
-                    DistanceKm = HaversineDistance(
-                        driver.Latitude.Value, driver.Longitude.Value,
-                        o.User.Latitude.Value, o.User.Longitude.Value
-                    ),
-                    Status = "Available"
+                    TotalPrice = o.TotalPrice,
+                    Status = "Accepted"
                 })
-                .OrderBy(x => x.DistanceKm)
                 .ToList();
 
-            var result = acceptedOrdersVm.Concat(nearbyOrdersVm).ToList();
+            // All orders that are NOT accepted by this driver
+            var nearbyOrders = orders
+                .Where(o => !o.DriverRequests.Any(r => r.DriverId == driver.Id && r.Status == "Accepted"))
+                .Select(o => new DriverOrderNearbyViewModel
+                {
+                    OrderId = o.OrderId,
+                    ClientName = o.User.UserName,
+                    From = o.PickupLocation,
+                    To = o.DropoffLocation,
+                    TotalPrice=o.TotalPrice,
 
-            return View(result);
-        }           
+                    Status = "Available"
+                })
+                .ToList();
+
+            return View(new DriverHomeViewModel
+            {
+                AcceptedOrders = acceptedOrders,
+                NearbyOrders = nearbyOrders
+            });
+        }
 
         // Driver accepts an order
         [HttpPost]
