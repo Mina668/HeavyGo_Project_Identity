@@ -52,43 +52,19 @@
 <body class="bg-light" style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto;">
     <header class="navbar">
         <div class="container-fluid">
-            @if (User.Identity.IsAuthenticated)
+            <a class="navbar-brand" href="/Home">HeavyGo</a>
+            @if(User.Identity.IsAuthenticated)
             {
-                @if (User.IsInRole("Client"))
-                {
-                    <a class="navbar-brand" href="/Home/ClientHome">HeavyGo</a>
-                }
-                else if (User.IsInRole("Driver"))
-                {
-                    <a class="navbar-brand" href="/Home/DriverHome">HeavyGo</a>
-                }
+            <div class="d-flex ms-auto align-items-center">
+                <a class="btn btn-outline-light btn-sm" asp-controller="Orders" asp-action="Index">MyOrders</a>
+                <a class="btn btn-outline-light btn-sm" asp-controller="Reviews" asp-action="UserReviews">MyReviews</a>
+                <a class="btn btn-outline-light btn-sm" asp-controller="Payments" asp-action="UserPayments">MyPayments</a>
+                <a class="btn btn-outline-light btn-sm" asp-controller="Profile" asp-action="Index">Profile</a>
+                <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="d-inline">
+                    <button type="submit" class="">Logout</button>
+                </form>
+            </div>
             }
-            else
-            {
-                <a class="navbar-brand" href="#">HeavyGo</a>
-            }
-            @RenderSection("NavbarButtons", required: false)
-           
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="/images/@(currentUser?.ProfileImage != null ? currentUser.ProfileImage.FileName : Url.Content("profile.jpg"))" alt="Profile" class="rounded-circle" width="40" height="40" />
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value">My Profile</a></li>
-                            <li><a class="dropdown-item" asp-area="Identity" asp-controller="Account" asp-action="Logout">Logout</a></li>
-                        }
-                        else
-                        {
-                            <li><a class="dropdown-item" asp-area="Identity" asp-controller="Account" asp-action="Register">Register</a></li>
-                            <li><a class="dropdown-item" asp-area="Identity" asp-controller="Account" asp-action="Login">Login</a></li>
-                        }
-                    </ul>
-                </li>
-            </ul>
-        </div>
         </div>
     </header>
 
