@@ -122,20 +122,15 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
 
             [Display(Name = "Vehicle Plate")]
             public string VehicleNumberPlate { get; set; }
+            [Display(Name = "Profile Image")]
+            public IFormFile ProfileImage { get; set; }
         }
 
-        /*
-        public async Task OnGetAsync(string returnUrl = null)
-        {
-            ReturnUrl = returnUrl;
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-        }
-        */
+     
         public async Task OnGetAsync(string role, string returnUrl = null)
         {
             ReturnUrl = returnUrl;
-            ViewData["Role"] = role; // نرسل الـ Role للصفحة
-
+            ViewData["Role"] = role;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
@@ -153,6 +148,27 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
                 }
 
                 var user = CreateUser();
+                if (Input.ProfileImage != null)
+                {
+                    var uploadsFolder = Path.Combine("wwwroot", "uploads");
+                    if (!Directory.Exists(uploadsFolder))
+                        Directory.CreateDirectory(uploadsFolder);
+
+                    string uniqueName = Guid.NewGuid().ToString() + "_" + Input.ProfileImage.FileName;
+                    string filePath = Path.Combine(uploadsFolder, uniqueName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await Input.ProfileImage.CopyToAsync(fileStream);
+                    }
+
+                    // save relative path to user
+                    user.profileImageUrl = "/uploads/" + uniqueName;
+                }
+                else
+                {
+                    user.profileImageUrl = null;
+                }
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
