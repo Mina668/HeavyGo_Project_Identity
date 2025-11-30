@@ -166,28 +166,7 @@ namespace HeavyGo_Project_Identity.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "Cars",
-                columns: table => new
-                {
-                    CarId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Model = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PlateNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Color = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    VehicleType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Cars", x => x.CarId);
-                    table.ForeignKey(
-                        name: "FK_Cars_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+            
 
             migrationBuilder.CreateTable(
                 name: "Orders",
@@ -355,10 +334,6 @@ namespace HeavyGo_Project_Identity.Migrations
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Cars_ApplicationUserId",
-                table: "Cars",
-                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DriverOrderRequests_DriverId",
@@ -415,8 +390,7 @@ namespace HeavyGo_Project_Identity.Migrations
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
 
-            migrationBuilder.DropTable(
-                name: "Cars");
+            
 
             migrationBuilder.DropTable(
                 name: "DriverOrderRequests");
