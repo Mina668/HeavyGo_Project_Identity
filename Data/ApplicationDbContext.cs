@@ -13,7 +13,6 @@ namespace HeavyGo_Project_Identity.Data
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<Car> Cars { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<UserLocation> UserLocations { get; set; }
         public DbSet<DriverOrderRequest> DriverOrderRequests { get; set; }
