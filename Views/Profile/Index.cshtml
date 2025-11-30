@@ -16,9 +16,8 @@
                     <h5 class="card-text">@Html.DisplayFor(model=>model.FullName)</h5>
                     <p class="card-text">@Html.DisplayFor(model=>model.Email)</p>
                     <p class="card-text">@Html.DisplayFor(model=>model.PhoneNumber)</p>
-                    <button class="btn btn-primary btn-sm" asp-area="Identity" asp-page="/Account/Manage/Index">Edit Profile</button>
                     <form asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-primary btn-sm">
-                        <button type="btn btn-primary btn-sm" class="">Edit Profile</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Edit Profile</button>
                     </form>
                 </div>
             </div>
