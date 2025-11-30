@@ -37,12 +37,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication(); // ? must be before Authorization
+app.UseAuthentication(); 
 app.UseAuthorization();
-app.MapControllerRoute(
-    name: "areas",
-    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
-// 6?? Route configuration
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=LandingPage}/{action=Index}/{id?}");

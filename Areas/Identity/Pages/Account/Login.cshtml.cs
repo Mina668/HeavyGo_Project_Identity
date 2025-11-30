@@ -93,7 +93,6 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
             {
                 ModelState.AddModelError(string.Empty, ErrorMessage);
             }
-            // تجاهل returnUrl تماماً واعتمد على الدور فقط
             returnUrl = null;
 
             //returnUrl ??= Url.Content("~/");
@@ -143,44 +142,5 @@ namespace HeavyGo_Project_Identity.Areas.Identity.Pages.Account
 
             return LocalRedirect("/");
         }
-
-
-        /*public async Task<IActionResult> OnPostAsync(string returnUrl = null)
-        {
-            returnUrl ??= Url.Content("~/");
-            if (!ModelState.IsValid)
-                return Page();
-
-            // Step 1 — Find user
-            var user = await _userManager.FindByEmailAsync(Input.Email);
-            if (user == null)
-            {
-                ModelState.AddModelError("", "Invalid login attempt.");
-                return Page();
-            }
-            // Step 2 — Attempt login
-            var result = await _signInManager.PasswordSignInAsync(
-                user.UserName,   // IMPORTANT: use username, not email
-                Input.Password,
-                Input.RememberMe,
-                lockoutOnFailure: false
-            );
-
-            if (!result.Succeeded)
-            {
-                ModelState.AddModelError("", "Invalid login attempt.");
-                return Page();
-            }
-            
-            // Step 3 — Role-based redirect
-            if (await _userManager.IsInRoleAsync(user, "Client"))
-                return LocalRedirect("/Home/ClientHome");
-
-            if (await _userManager.IsInRoleAsync(user, "Driver"))
-                return LocalRedirect("/Home/DriverHome");
-
-            // If user has no role
-            return LocalRedirect("/");
-        }*/
     }
 }

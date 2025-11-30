@@ -43,111 +43,33 @@ namespace HeavyGo_Project_Identity.Controllers
             //if (driver == null || driver.Latitude == null || driver.Longitude == null)
             //    return RedirectToAction("UpdateLocation", "Account");
             
-var acceptedOrders = await _context.DriverOrderRequests
-    .Where(r => r.DriverId == driver.Id && r.Status == "Accepted")
-    .Include(r => r.Order)
-        .ThenInclude(o => o.User)
-    .ToListAsync();
+            var acceptedOrders = await _context.DriverOrderRequests
+                .Where(r => r.DriverId == driver.Id && r.Status == "Accepted")
+                .Include(r => r.Order)
+                    .ThenInclude(o => o.User)
+                .ToListAsync();
 
-var acceptedOrdersVm = acceptedOrders.Select(r => new DriverOrderNearbyViewModel
-{
-    OrderId = r.OrderId,
-    ClientName = r.Order.User.UserName,
-    From = r.Order.PickupLocation,
-    To = r.Order.DropoffLocation,
-    DistanceKm = HaversineDistance(
-        driver.Latitude.Value, driver.Longitude.Value,
-        r.Order.User.Latitude.Value, r.Order.User.Longitude.Value
-    ),
-    Status = "Accepted"
-}).ToList();
+            var acceptedOrdersVm = acceptedOrders.Select(r => new DriverOrderNearbyViewModel
+            {
+                OrderId = r.OrderId,
+                ClientName = r.Order.User.UserName,
+                From = r.Order.PickupLocation,
+                To = r.Order.DropoffLocation,
+                DistanceKm = HaversineDistance(
+                    driver.Latitude.Value, driver.Longitude.Value,
+                    r.Order.User.Latitude.Value, r.Order.User.Longitude.Value
+                ),
+                Status = "Accepted"
+            }).ToList();
 
-// Orders ???????
-var nearbyOrders = await _context.Orders
-    .Include(o => o.User)
-    .Include(o => o.DriverRequests)
-    .Where(o => !o.DriverRequests.Any(r => r.Status == "Accepted"))
-    .ToListAsync();
-
-var nearbyOrdersVm = nearbyOrders
-    .Where(o => o.User.Latitude != null && o.User.Longitude != null)
-    .Select(o => new DriverOrderNearbyViewModel
-    {
-        OrderId = o.OrderId,
-        ClientName = o.User.UserName,
-        From = o.PickupLocation,
-        To = o.DropoffLocation,
-        DistanceKm = HaversineDistance(
-            driver.Latitude.Value, driver.Longitude.Value,
-            o.User.Latitude.Value, o.User.Longitude.Value
-        ),
-        Status = "Available"
-    })
-    .OrderBy(x => x.DistanceKm)
-    .ToList();
-
-var result = acceptedOrdersVm.Concat(nearbyOrdersVm).ToList();
-
-/*
-            // --- Orders ???????? ?? ?????? ?? ---
-            var acceptedOrders = await _context.Orders
-        .Include(o => o.User)
-        .Include(o => o.DriverRequests)
-        .Where(o => o.DriverRequests.Any(r => r.DriverId == driver.Id && r.Status == "Accepted"))
-        .ToListAsync();
-
-    var acceptedOrdersVm = acceptedOrders
-        .Select(o => new DriverOrderNearbyViewModel
-        {
-            OrderId = o.OrderId,
-            ClientName = o.User.UserName,
-            From = o.PickupLocation,
-            To = o.DropoffLocation,
-            DistanceKm = HaversineDistance(
-                driver.Latitude.Value, driver.Longitude.Value,
-                o.User.Latitude.Value, o.User.Longitude.Value
-            ),
-            Status = "Accepted"
-        })
-        .ToList();
-
-    // --- Orders ??????? ??????? ---
-    var nearbyOrders = await _context.Orders
-        .Include(o => o.User)
-        .Include(o => o.DriverRequests)
-        .Where(o => !o.DriverRequests.Any(r => r.Status == "Accepted"))
-        .ToListAsync();
-
-    var nearbyOrdersVm = nearbyOrders
-        .Where(o => o.User.Latitude != null && o.User.Longitude != null)
-        .Select(o => new DriverOrderNearbyViewModel
-        {
-            OrderId = o.OrderId,
-            ClientName = o.User.UserName,
-            From = o.PickupLocation,
-            To = o.DropoffLocation,
-            DistanceKm = HaversineDistance(
-                driver.Latitude.Value, driver.Longitude.Value,
-                o.User.Latitude.Value, o.User.Longitude.Value
-            ),
-            Status = "Available"
-        })
-        .OrderBy(x => x.DistanceKm)
-        .ToList();
-
-    // ??? ???????
-    var result = acceptedOrdersVm.Concat(nearbyOrdersVm).ToList();
-
-    return View(result);
-}
-/*
-            var orders = await _context.Orders
+            // Orders ???????
+            var nearbyOrders = await _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.DriverRequests)
                 .Where(o => !o.DriverRequests.Any(r => r.Status == "Accepted"))
                 .ToListAsync();
 
-            var result = orders
+            var nearbyOrdersVm = nearbyOrders
                 .Where(o => o.User.Latitude != null && o.User.Longitude != null)
                 .Select(o => new DriverOrderNearbyViewModel
                 {
@@ -158,13 +80,14 @@ var result = acceptedOrdersVm.Concat(nearbyOrdersVm).ToList();
                     DistanceKm = HaversineDistance(
                         driver.Latitude.Value, driver.Longitude.Value,
                         o.User.Latitude.Value, o.User.Longitude.Value
-                    )
+                    ),
+                    Status = "Available"
                 })
                 .OrderBy(x => x.DistanceKm)
                 .ToList();
 
-            return View(result);
-        }*/
+            var result = acceptedOrdersVm.Concat(nearbyOrdersVm).ToList();
+
             return View(result);
         }           
 
